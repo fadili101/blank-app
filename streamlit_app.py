@@ -31,7 +31,9 @@ if picture:
 
     # Afficher les dimensions de l'image
     print(f"Image dimensions: {h}x{w}")
-    
+    print("[INFO] computing object detections...")
+    net.setInput(blob)
+    detections = net.forward()
     # Liste pour stocker les objets détectés valides
     valid_detections = []
 

@@ -1,10 +1,10 @@
-import streamlit as st
+import av
 import cv2
-import numpy as np
-from PIL import Image
+import streamlit as st
+from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
 
 # Titre de l'application
-st.title("Détection d'objets avec OpenCV et Webcam")
+st.title("Détection d'objets en direct avec Webcam")
 
 # Chargement du modèle
 @st.cache_resource
@@ -14,57 +14,34 @@ def load_model():
     net = cv2.dnn.readNetFromCaffe(prototxt, model)
     return net
 
-# Charger le modèle
 net = load_model()
 
-# Activer la webcam
-start_webcam = st.button("Activer la webcam")
-capture_image = st.button("Capturer une image")
+# Classe pour la détection en direct
+class ObjectDetectionTransformer(VideoTransformerBase):
+    def __init__(self):
+        self.net = net
 
-# Affichage vidéo avec OpenCV
-if start_webcam:
-    st.write("**Appuyez sur 'Capturer une image' pour analyser une image.**")
-    cap = cv2.VideoCapture(0)
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        (h, w) = img.shape[:2]
 
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            st.write("Erreur: Impossible d'accéder à la webcam.")
-            break
+        # Prétraitement
+        blob = cv2.dnn.blobFromImage(cv2.resize(img, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+        self.net.setInput(blob)
+        detections = self.net.forward()
 
-        # Afficher le flux vidéo dans l'application Streamlit
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        st.image(frame, channels="RGB", caption="Flux Webcam", use_column_width=True)
-
-        # Vérifier si le bouton pour capturer est cliqué
-        if capture_image:
-            image = frame.copy()
-            cap.release()
-            cv2.destroyAllWindows()
-            break
-
-    if capture_image and 'image' in locals():
-        # Prétraitement pour le modèle
-        (h, w) = image.shape[:2]
-        blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
-        net.setInput(blob)
-        detections = net.forward()
-
-        # Détections valides
+        # Boucle sur les détections
         for i in range(0, detections.shape[2]):
             confidence = detections[0, 0, i, 2]
-            if confidence > 0.25:
+            if confidence > 0.5:
                 box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
                 (startX, startY, endX, endY) = box.astype("int")
-
-                # Dessiner la boîte autour de l'objet détecté
-                text = "{:.2f}%".format(confidence * 100)
+                text = f"{confidence:.2f}"
+                cv2.rectangle(img, (startX, startY), (endX, endY), (0, 255, 0), 2)
                 y = startY - 10 if startY - 10 > 10 else startY + 10
-                cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-                cv2.putText(image, text, (startX, y),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
+                cv2.putText(img, text, (startX, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-        # Afficher l'image traitée
-        st.image(image, caption="Image capturée avec détections", use_column_width=True)
-else:
-    st.write("Appuyez sur 'Activer la webcam' pour commencer.")
+        return img
+
+# Ajouter le streamer
+webrtc_streamer(key="object-detection", video_transformer_factory=ObjectDetectionTransformer)

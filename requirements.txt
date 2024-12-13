@@ -3,3 +3,5 @@ opencv-python-headless
 numpy
 imutils
 pillow
+pip install opencv-python-headless streamlit-webrtc
+streamlit-webrtc

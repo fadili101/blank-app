@@ -28,9 +28,11 @@ if net is None:
 class ObjectDetectionTransformer(VideoTransformerBase):
     def __init__(self):
         self.net = net
+        self.frame = None
 
     def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+        self.frame = frame.to_ndarray(format="bgr24")
+        img = self.frame
         (h, w) = img.shape[:2]
 
         # Prétraitement pour le modèle
@@ -62,5 +64,12 @@ webrtc_ctx = webrtc_streamer(
 # Vérifier si la webcam est activée
 if webrtc_ctx.state.playing:
     st.write("La webcam est activée. Attendez quelques secondes pour voir le flux vidéo.")
+    
+    # Ajouter un bouton pour prendre une photo
+    if st.button("Prendre une photo"):
+        if webrtc_ctx.video_transformer.frame is not None:
+            st.image(webrtc_ctx.video_transformer.frame, caption="Image capturée", use_column_width=True)
+        else:
+            st.warning("Aucune image n'a été capturée.")
 else:
     st.warning("La webcam ne semble pas être activée. Assurez-vous que votre caméra est connectée et autorisée dans le navigateur.")

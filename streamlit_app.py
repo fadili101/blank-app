@@ -14,7 +14,8 @@ if picture:
     st.image(picture)
 
     # Convertir l'image Streamlit en un format OpenCV (numpy array)
-    image = Image.open(io.BytesIO(picture))  # Charger l'image depuis les octets
+    image_bytes = picture.getvalue()  # Récupérer les octets de l'image
+    image = Image.open(io.BytesIO(image_bytes))  # Charger l'image depuis les octets
     image = np.array(image)  # Convertir en numpy array
 
     # Redimensionner l'image pour avoir une largeur maximale de 400 pixels

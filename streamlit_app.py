@@ -13,7 +13,6 @@ picture = st.camera_input("Take a picture", disabled=not enable)
 if picture:
     # Afficher l'image capturée
     
-
     # Convertir l'image Streamlit en un format OpenCV (numpy array)
     image_bytes = picture.getvalue()  # Récupérer les octets de l'image
     image = Image.open(io.BytesIO(image_bytes))  # Charger l'image depuis les octets
@@ -31,12 +30,14 @@ if picture:
 
     # Afficher les dimensions de l'image
     print(f"Image dimensions: {h}x{w}")
-    # resize it to have a maximum width of 400 pixels
-    image = imutils.resize(image, width=400)
-    blob = cv2.dnn.blobFromImage(cv2.resize(image, (300, 300)), 1.0, (300, 300), (104.0, 177.0, 123.0))
+    
+    # Redimensionner l'image et préparer le blob pour la détection
+    image_resized = cv2.resize(image, (300, 300))
+    blob = cv2.dnn.blobFromImage(image_resized, 1.0, (300, 300), (104.0, 177.0, 123.0))
     print("[INFO] computing object detections...")
     net.setInput(blob)
     detections = net.forward()
+    
     # Liste pour stocker les objets détectés valides
     valid_detections = []
 
@@ -44,7 +45,7 @@ if picture:
         # Extraire la confiance associée à la détection
         confidence = detections[0, 0, i, 2]
 
-        # Filtrer les détections faibles (seuil de 0.5)
+        # Filtrer les détections faibles (seuil de 0.2)
         if confidence > 0.2:
             # Calculer les coordonnées du rectangle de détection
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -53,15 +54,26 @@ if picture:
             # Ajouter la détection valide à la liste
             valid_detections.append((startX, startY, endX, endY, confidence))
 
-    # Choisir un seul objet parmi les détections valides
+    # Dessiner tous les objets en rouge et celui sélectionné en vert
     if valid_detections:
+        # Choisir un objet aléatoire parmi les détections valides
         chosen_detection = random.choice(valid_detections)
         (startX, startY, endX, endY, confidence) = chosen_detection
 
-        # Dessiner le rectangle autour de l'objet choisi
+        # Dessiner les rectangles rouges pour tous les objets détectés
+        for detection in valid_detections:
+            (startX, startY, endX, endY, confidence) = detection
+            cv2.rectangle(image, (startX, startY), (endX, endY), (0, 0, 255), 2)  # Rouge
+            text = "{:.2f}%".format(confidence * 100)
+            y = startY - 10 if startY - 10 > 10 else startY + 10
+            cv2.putText(image, text, (startX, y),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+
+        # Dessiner le rectangle vert autour de l'objet choisi
+        (startX, startY, endX, endY, confidence) = chosen_detection
         text = "{:.2f}%".format(confidence * 100)
         y = startY - 10 if startY - 10 > 10 else startY + 10
-        cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+        cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)  # Vert
         cv2.putText(image, text, (startX, y),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 2)
 
@@ -69,5 +81,5 @@ if picture:
     else:
         print("Aucun objet valide détecté.")
 
-    # Afficher l'image avec l'objet choisi
+    # Afficher l'image avec les objets détectés
     st.image(image)

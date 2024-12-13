@@ -4,6 +4,7 @@ import imutils
 import numpy as np
 from PIL import Image
 import io
+import random
 
 # Active la caméra si la case est cochée
 enable = st.checkbox("Enable camera")

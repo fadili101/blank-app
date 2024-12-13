@@ -53,8 +53,14 @@ class ObjectDetectionTransformer(VideoTransformerBase):
         return av.VideoFrame.from_ndarray(img, format="bgr24")
 
 # Ajouter le streamer
-webrtc_streamer(
+webrtc_ctx = webrtc_streamer(
     key="object-detection",
     video_transformer_factory=ObjectDetectionTransformer,
     media_stream_constraints={"video": True, "audio": False},  # Désactiver l'audio
 )
+
+# Vérifier si la webcam est activée
+if webrtc_ctx.state.playing:
+    st.write("La webcam est activée. Attendez quelques secondes pour voir le flux vidéo.")
+else:
+    st.warning("La webcam ne semble pas être activée. Assurez-vous que votre caméra est connectée et autorisée dans le navigateur.")

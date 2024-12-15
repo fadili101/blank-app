@@ -5,6 +5,40 @@ import numpy as np
 from PIL import Image
 import io
 import random
+import base64
+
+# Afficher un logo au début de l'application
+st.set_page_config(page_title="Mon Application", page_icon=":star:", layout="wide")
+# Créer une disposition avec colonnes
+# Utiliser HTML pour insérer une image avec une largeur de 100%
+# Charger une image locale
+image_path = "banner.jpg"
+
+# Convertir l'image en base64
+with open(image_path, "rb") as file:
+    img_base64 = base64.b64encode(file.read()).decode()
+
+# Afficher l'image avec largeur 100%
+st.markdown(
+    f"""
+    <style>
+    .logo-container {{
+        display: flex;
+        justify-content: center;
+    }}
+    .logo-container img {{
+        max-width: 100%;
+        height: auto;
+    }}
+    </style>
+    <div class="logo-container">
+        <img src="data:image/jpg;base64,{img_base64}" alt="Logo">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+# Ajouter un logo
+#st.image("banner.jpg", width="100%")  # Chemin vers le logo (local ou URL)
 
 # Active la caméra si la case est cochée
 enable = st.checkbox("Enable camera")

@@ -8,7 +8,7 @@ import random
 import base64
 
 # Afficher un logo au début de l'application
-st.set_page_config(page_title="Mon Application", page_icon=":star:", layout="wide")
+st.set_page_config(page_title="IbnGhazala-IA-Detection", page_icon=":star:", layout="wide")
 # Créer une disposition avec colonnes
 # Utiliser HTML pour insérer une image avec une largeur de 100%
 # Charger une image locale
